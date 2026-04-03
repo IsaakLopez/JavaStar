@@ -1,0 +1,20 @@
+main
+    ente x = 10
+    ente y = 20
+
+    if x < y AND y > 5
+        star.println("X es menor")
+    else
+        star.println("X es mayor")
+
+    for ente i = 0; i < 3; i++
+        star.println(i)
+
+    while x < 15
+        x = x + 1
+
+    switch x
+        case 10
+            star.println("Diez")
+        default
+            star.println("Otro")

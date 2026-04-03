@@ -1,0 +1,23 @@
+package javastar;
+
+public enum TokenType {
+    // Keywords
+    MAIN, ENTE, DECI, TEXT, BOOL, SCAN,
+    IF, ELSE, WHILE, FOR, SWITCH, CASE, DEFAULT,
+    AND, OR, NOT,
+    TRUE, FALSE, NEWW,
+    STAR, PRINTLN,
+
+    // Literals and identifiers
+    IDENTIFIER, INTEGER, DECIMAL, STRING,
+
+    // Operators
+    PLUS, MINUS, STAR_OP, SLASH, PERCENT,
+    ASSIGN, EQUAL_EQUAL, BANG_EQUAL,
+    LESS, LESS_EQUAL, GREATER, GREATER_EQUAL,
+    PLUS_PLUS, MINUS_MINUS,
+
+    // Delimiters
+    LPAREN, RPAREN, DOT, COMMA, COLON, SEMICOLON,
+    INDENT, DEDENT, NEWLINE, EOF
+}
