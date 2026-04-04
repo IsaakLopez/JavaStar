@@ -42,6 +42,7 @@ public class StarIDE extends JFrame {
     private JTabbedPane tabs;
     private JLabel     statusLabel;
     private boolean    highlighting = false;
+    private File       currentFile  = null;
 
     // ══════════════════════════════════════════════════════════════════════
     public StarIDE() {
@@ -122,12 +123,14 @@ public class StarIDE extends JFrame {
         // Barra de herramientas
         JButton btnNew   = makeButton("Probar",      C_DIM);
         JButton btnOpen  = makeButton("Abrir",      C_CYAN);
+        JButton btnSave  = makeButton("Guardar",    C_GOLD);
         JButton btnRun   = makeButton("Ejecutar",   C_GREEN);
         JButton btnClear = makeButton("Limpiar",    C_RED);
         btnRun.setFont(new Font("Segoe UI", Font.BOLD, 13));
 
         btnNew.addActionListener  (e -> newFile());
         btnOpen.addActionListener (e -> openFile());
+        btnSave.addActionListener (e -> saveFile());
         btnRun.addActionListener  (e -> runCode());
         btnClear.addActionListener(e -> clearOutput());
 
@@ -135,6 +138,7 @@ public class StarIDE extends JFrame {
         toolbar.setOpaque(false);
         toolbar.add(btnNew);
         toolbar.add(btnOpen);
+        toolbar.add(btnSave);
         toolbar.add(btnRun);
         toolbar.add(btnClear);
 
@@ -179,6 +183,7 @@ public class StarIDE extends JFrame {
             @Override public void keyReleased(KeyEvent e) {
                 hlTimer.restart();
                 if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_ENTER) runCode();
+                if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_S)     saveFile();
             }
         });
 
@@ -204,7 +209,7 @@ public class StarIDE extends JFrame {
         darkScrollBars(scroll);
 
         panel.add(scroll, BorderLayout.CENTER);
-        panel.add(labelBar("  Ctrl + Enter  para ejecutar rápido", C_DIM, false), BorderLayout.SOUTH);
+        panel.add(labelBar("  Ctrl+Enter  para ejecutar  ·  Ctrl+S  para guardar", C_DIM, false), BorderLayout.SOUTH);
         return panel;
     }
 
@@ -242,7 +247,7 @@ public class StarIDE extends JFrame {
         bar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, C_BORDER));
         bar.setPreferredSize(new Dimension(0, 26));
 
-        statusLabel = new JLabel("  ✦ JavaStar listo. Escribe tu código y presiona ▶ Ejecutar");
+        statusLabel = new JLabel("JavaStar listo. Escribe tu código y presiona Ejecutar");
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         statusLabel.setForeground(C_DIM);
 
@@ -278,7 +283,7 @@ public class StarIDE extends JFrame {
 
             if (!lex.errors().isEmpty()) {
                 showErrors("ERRORES LÉXICOS", lex.errors());
-                status("  ✕ Error léxico — revisa la pestaña ⚠ Errores", C_RED);
+                status("Error léxico — revisa la pestaña Errores", C_RED);
                 return;
             }
 
@@ -289,7 +294,7 @@ public class StarIDE extends JFrame {
 
             if (!parse.errors().isEmpty()) {
                 showErrors("ERRORES SINTÁCTICOS", parse.errors());
-                status("  ✕ Error sintáctico — revisa la pestaña ⚠ Errores", C_RED);
+                status("Error sintáctico — revisa la pestaña Errores", C_RED);
                 return;
             }
 
@@ -304,15 +309,15 @@ public class StarIDE extends JFrame {
 
             if (!interp.getErrors().isEmpty()) {
                 showErrors("ERRORES EN EJECUCIÓN", interp.getErrors());
-                status("  ⚠ Ejecutado con errores — revisa ⚠ Errores", new Color(255, 180, 50));
+                status(" Ejecutado con errores — revisa Errores", new Color(255, 180, 50));
             } else {
-                status("  ✔ Ejecución completada exitosamente", C_GREEN);
+                status(" Ejecución completada exitosamente", C_GREEN);
             }
 
         } catch (Exception ex) {
             showErrors("ERROR INESPERADO", java.util.List.of(
                     ex.getClass().getSimpleName() + ": " + ex.getMessage()));
-            status("  ✕ Error inesperado", C_RED);
+            status(" Error inesperado", C_RED);
         } finally {
             System.setOut(original);
         }
@@ -331,12 +336,12 @@ public class StarIDE extends JFrame {
                 "Archivos JavaStar (*.jstar)", "jstar"));
         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             try {
-                String content = new String(java.nio.file.Files.readAllBytes(
-                        fc.getSelectedFile().toPath()));
+                currentFile = fc.getSelectedFile();
+                String content = new String(java.nio.file.Files.readAllBytes(currentFile.toPath()));
                 editor.setText(content);
                 applyTabSize(editor, 4);
                 applyHighlighting();
-                status("  ✦ Archivo cargado: " + fc.getSelectedFile().getName(), C_CYAN);
+                status("  ✦ Archivo cargado: " + currentFile.getName(), C_CYAN);
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "No se pudo leer el archivo.",
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -344,9 +349,32 @@ public class StarIDE extends JFrame {
         }
     }
 
+    private void saveFile() {
+        if (currentFile == null) {
+            // Sin archivo actual → pedir dónde guardar
+            JFileChooser fc = new JFileChooser();
+            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                    "Archivos JavaStar (*.jstar)", "jstar"));
+            fc.setSelectedFile(new File("programa.jstar"));
+            if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+            File selected = fc.getSelectedFile();
+            // Asegurar extensión .jstar
+            if (!selected.getName().endsWith(".jstar"))
+                selected = new File(selected.getParentFile(), selected.getName() + ".jstar");
+            currentFile = selected;
+        }
+        try {
+            java.nio.file.Files.writeString(currentFile.toPath(), editor.getText());
+            status("  ✔ Guardado: " + currentFile.getName(), C_GOLD);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "No se pudo guardar el archivo:\n" + ex.getMessage(),
+                    "Error al guardar", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void clearOutput() {
         outputArea.setText(""); tokenArea.setText(""); astArea.setText(""); errorArea.setText("");
-        status("  ✦ Salida limpiada.", C_DIM);
+        status(" Salida limpiada.", C_DIM);
     }
 
     // ══ SYNTAX HIGHLIGHTING ═══════════════════════════════════════════════

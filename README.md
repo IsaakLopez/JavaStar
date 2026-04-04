@@ -150,19 +150,19 @@ IDE gráfico con tema espacial integrado en el compilador.
 ### Interfaz
 
 ```
-┌─────────────────────────────────────────────────────┐
-│ JavaStar        [Nuevo] [Abrir] [Ejecutar] [Limpiar]│
-├────────────────────────┬────────────────────────────┤
-│   Editor JavaStar      │    Resultados              │
-│                        │  ┌──────────────────────┐  │
-│  main                  │  │  Salida              │  │
-│      ente x = 10       │  │  Tokens              │  │
-│      star.println(x)   │  │  Árbol               │  │
-│                        │  │  Errores             │  │
-│                        │  └──────────────────────┘  │
-├────────────────────────┴────────────────────────────┤
-│   JavaStar listo.  Ctrl+Enter para ejecutar         │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ JavaStar   [Probar] [Abrir] [Guardar] [Ejecutar] [Limpiar]       │
+├─────────────────────────────┬────────────────────────────────────┤
+│   Editor JavaStar           │    Resultados                      │
+│                             │  ┌──────────────────────────────┐  │
+│  main                       │  │  Salida                      │  │
+│      ente x = 10            │  │  Tokens                      │  │
+│      star.println(x)        │  │  Árbol                       │  │
+│                             │  │  Errores                     │  │
+│                             │  └──────────────────────────────┘  │
+├─────────────────────────────┴────────────────────────────────────┤
+│   Ctrl+Enter para ejecutar  ·  Ctrl+S para guardar               │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### Pestañas de resultado
@@ -179,6 +179,7 @@ IDE gráfico con tema espacial integrado en el compilador.
 | Atajo | Acción |
 |---|---|
 | `Ctrl + Enter` | Compilar y ejecutar |
+| `Ctrl + S`     | Guardar archivo (pide ruta si es nuevo) |
 
 ---
 
