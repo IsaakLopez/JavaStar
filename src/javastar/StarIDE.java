@@ -44,6 +44,12 @@ public class StarIDE extends JFrame {
     private boolean    highlighting = false;
     private File       currentFile  = null;
 
+    // ── Autocomplete ───────────────────────────────────────────────────────
+    private JWindow              acPopup;
+    private JList<String>        acList;
+    private DefaultListModel<String> acModel;
+    private boolean              suppressAC = false;
+
     // ══════════════════════════════════════════════════════════════════════
     public StarIDE() {
         super("JavaStar IDE");
@@ -176,10 +182,31 @@ public class StarIDE extends JFrame {
         editor.setText(sampleCode());
         SwingUtilities.invokeLater(() -> applyTabSize(editor, 4));
 
+        // Autocomplete popup
+        setupAutocomplete();
+
         // Debounce: resaltar 280 ms después de la última tecla
         javax.swing.Timer hlTimer = new javax.swing.Timer(280, e -> applyHighlighting());
         hlTimer.setRepeats(false);
+
         editor.addKeyListener(new KeyAdapter() {
+            @Override public void keyPressed(KeyEvent e) {
+                if (!acPopup.isVisible()) return;
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_DOWN -> {
+                        int i = acList.getSelectedIndex();
+                        if (i < acModel.size() - 1) acList.setSelectedIndex(i + 1);
+                        e.consume();
+                    }
+                    case KeyEvent.VK_UP -> {
+                        int i = acList.getSelectedIndex();
+                        if (i > 0) acList.setSelectedIndex(i - 1);
+                        e.consume();
+                    }
+                    case KeyEvent.VK_TAB, KeyEvent.VK_ENTER -> { acceptSuggestion(); e.consume(); }
+                    case KeyEvent.VK_ESCAPE -> { acPopup.setVisible(false); e.consume(); }
+                }
+            }
             @Override public void keyReleased(KeyEvent e) {
                 hlTimer.restart();
                 if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_ENTER) runCode();
@@ -187,7 +214,7 @@ public class StarIDE extends JFrame {
             }
         });
 
-        // Números de línea
+        // Números de línea + disparo de autocomplete
         JTextArea gutter = new JTextArea("1");
         gutter.setBackground(BG_GUTTER);
         gutter.setForeground(new Color(70, 70, 120));
@@ -197,9 +224,15 @@ public class StarIDE extends JFrame {
         gutter.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, C_BORDER));
 
         editor.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate (javax.swing.event.DocumentEvent e) { refreshGutter(gutter); }
-            public void removeUpdate (javax.swing.event.DocumentEvent e) { refreshGutter(gutter); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { }
+            public void insertUpdate (javax.swing.event.DocumentEvent e) {
+                refreshGutter(gutter);
+                SwingUtilities.invokeLater(() -> triggerAutocomplete());
+            }
+            public void removeUpdate (javax.swing.event.DocumentEvent e) {
+                refreshGutter(gutter);
+                SwingUtilities.invokeLater(() -> { if (!suppressAC) acPopup.setVisible(false); });
+            }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {}
         });
 
         JScrollPane scroll = new JScrollPane(editor);
@@ -212,6 +245,87 @@ public class StarIDE extends JFrame {
         panel.add(labelBar("  Ctrl+Enter  para ejecutar  ·  Ctrl+S  para guardar", C_DIM, false), BorderLayout.SOUTH);
         return panel;
     }
+
+    // ── AUTOCOMPLETE ───────────────────────────────────────────────────────
+    private void setupAutocomplete() {
+        acModel = new DefaultListModel<>();
+        acList  = new JList<>(acModel);
+        acList.setBackground(new Color(22, 22, 48));
+        acList.setForeground(C_GOLD);
+        acList.setSelectionBackground(new Color(60, 60, 120));
+        acList.setSelectionForeground(Color.WHITE);
+        acList.setFont(monoFont(13));
+        acList.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
+        acList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) acceptSuggestion();
+            }
+        });
+
+        JScrollPane sp = new JScrollPane(acList);
+        sp.setBorder(BorderFactory.createLineBorder(new Color(70, 70, 160), 1));
+        sp.setBackground(new Color(22, 22, 48));
+        darkScrollBars(sp);
+
+        acPopup = new JWindow(this);
+        acPopup.setFocusableWindowState(false);   // el popup NO roba el foco del editor
+        acPopup.setBackground(new Color(22, 22, 48));
+        acPopup.add(sp);
+    }
+
+    private void triggerAutocomplete() {
+        if (suppressAC) return;
+        try {
+            int pos  = editor.getCaretPosition();
+            String full = editor.getDocument().getText(0, pos);
+            int start = pos;
+            while (start > 0 && (Character.isLetterOrDigit(full.charAt(start - 1))
+                                  || full.charAt(start - 1) == '_')) start--;
+            String prefix = full.substring(start);
+            if (prefix.length() < 1) { acPopup.setVisible(false); return; }
+
+            java.util.List<String> matches = new ArrayList<>();
+            for (String kw : KEYWORDS) {
+                if (kw.startsWith(prefix) && !kw.equals(prefix)) matches.add(kw);
+            }
+            if (matches.isEmpty()) { acPopup.setVisible(false); return; }
+
+            acModel.clear();
+            matches.forEach(acModel::addElement);
+            acList.setSelectedIndex(0);
+
+            java.awt.geom.Rectangle2D r = editor.modelToView2D(pos);
+            Point loc = editor.getLocationOnScreen();
+            int px = loc.x + (int) r.getX();
+            int py = loc.y + (int) r.getY() + (int) r.getHeight();
+            int h  = Math.min(matches.size() * 24 + 6, 130);
+            acPopup.setSize(180, h);
+            acPopup.setLocation(px, py);
+            acPopup.setVisible(true);
+        } catch (Exception ex) {
+            acPopup.setVisible(false);
+        }
+    }
+
+    private void acceptSuggestion() {
+        String sel = acList.getSelectedValue();
+        if (sel == null) return;
+        suppressAC = true;
+        try {
+            int pos  = editor.getCaretPosition();
+            String full = editor.getDocument().getText(0, pos);
+            int start = pos;
+            while (start > 0 && (Character.isLetterOrDigit(full.charAt(start - 1))
+                                  || full.charAt(start - 1) == '_')) start--;
+            editor.getDocument().remove(start, pos - start);
+            editor.getDocument().insertString(start, sel, null);
+            acPopup.setVisible(false);
+        } catch (BadLocationException ignored) {
+        } finally {
+            suppressAC = false;
+        }
+    }
+
 
     // ── PANEL DE SALIDA ────────────────────────────────────────────────────
     private JPanel buildOutputPanel() {

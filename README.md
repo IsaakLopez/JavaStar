@@ -1,20 +1,21 @@
 # JavaStar
 
-Compilador completo del lenguaje **JavaStar** implementado en Java, con IDE gráfico integrado. Incluye todas las fases de un compilador frontend más un intérprete para ejecutar programas directamente.
+Compilador completo del lenguaje **JavaStar** implementado en Java, con IDE gráfico integrado. Incluye todas las fases de un compilador frontend más un intérprete que ejecuta programas directamente con salida en tiempo real.
 
 ## Características
 
 | Componente | Descripción |
 |---|---|
-| Analizador léxico | Tokenización completa con reporte de errores |
-| Analizador sintáctico | Parser recursivo descendente |
-| Árbol sintáctico (AST) | Generación y visualización con conectores gráficos |
-| Intérprete | Ejecución real del programa con salida en consola |
+| Analizador léxico | Tokenización completa con reporte de errores (línea y columna) |
+| Analizador sintáctico | Parser recursivo descendente con recuperación de errores |
+| Árbol sintáctico (AST) | Generación y visualización con conectores gráficos en español |
+| Intérprete | Ejecución real del programa con salida en tiempo real |
+| Entrada de usuario | `escanear` muestra un diálogo para leer valores durante la ejecución |
 | Manejo de errores léxicos | Detección y reporte con línea y columna |
 | Manejo de errores sintácticos | Recuperación y reporte sin colgar el parser |
 | Gramática EBNF | Especificación formal en `GRAMATICA_EBNF.md` |
 | Indentación significativa | Basada en **tabs** (como Python), genera tokens INDENT/DEDENT |
-| IDE gráfico (StarIDE) | Interfaz visual con tema espacial |
+| IDE gráfico (StarIDE) | Interfaz visual con tema espacial y autocompletado de keywords |
 
 ---
 
@@ -29,51 +30,54 @@ main
 
 ### Tipos de datos
 
-| Tipo | Descripción | Ejemplo |
+| Keyword | Tipo | Ejemplo |
 |---|---|---|
-| `ente` | Entero | `ente x = 10` |
-| `deci` | Decimal | `deci pi = 3.14` |
-| `text` | Cadena de texto | `text msg = "hola"` |
-| `bool` | Booleano | `bool activo = true` |
-| `scan` | Entrada de usuario | `scan dato = 0` |
+| `entero` | Número entero | `entero x = 10` |
+| `decimal` | Número decimal | `decimal pi = 3.14` |
+| `texto` | Cadena de texto | `texto msg = "hola"` |
+| `booleano` | Verdadero / falso | `booleano activo = verdadero` |
+| `escanear` | Entrada del usuario | `escanear dato = 0` |
 
 ### Sentencias soportadas
 
 ```
 main
-    # Declaración
-    ente x = 10
-    deci precio = 9.99
-    text nombre = "JavaStar"
-    bool ok = true
+    # Declaración de variables
+    entero x = 10
+    decimal precio = 9.99
+    texto nombre = "JavaStar"
+    booleano ok = verdadero
+
+    # Entrada de usuario (abre diálogo)
+    escanear valor = 0
 
     # Asignación
     x = x + 1
 
-    # Impresión  (obligatorio el prefijo star.)
-    star.println("Hola mundo")
-    star.println(x)
+    # Impresión (obligatorio el prefijo star.)
+    star.imprimir("Hola mundo")
+    star.imprimir(x)
 
     # Condicional
-    if x < 20 AND ok
-        star.println("dentro del if")
-    else
-        star.println("dentro del else")
+    si x < 20 Y ok
+        star.imprimir("dentro del si")
+    sino
+        star.imprimir("dentro del sino")
 
-    # Bucle while
-    while x < 15
+    # Bucle mientras
+    mientras x < 15
         x = x + 1
 
-    # Bucle for
-    for ente i = 0; i < 5; i++
-        star.println(i)
+    # Bucle para
+    para entero i = 0; i < 5; i++
+        star.imprimir(i)
 
-    # Switch
-    switch x
-        case 10
-            star.println("es diez")
-        default
-            star.println("otro valor")
+    # Seleccionar (switch)
+    seleccionar x
+        caso 10
+            star.imprimir("es diez")
+        defecto
+            star.imprimir("otro valor")
 ```
 
 ### Operadores
@@ -82,12 +86,53 @@ main
 |---|---|
 | Aritméticos | `+`  `-`  `*`  `/`  `%` |
 | Relacionales | `<`  `<=`  `>`  `>=`  `==`  `!=` |
-| Lógicos | `AND`  `OR`  `NOT` |
+| Lógicos | `Y`  `O`  `NO` |
 | Incremento | `++`  `--` (postfijo) |
+
+### Literales booleanos
+
+| Keyword | Valor |
+|---|---|
+| `verdadero` | true |
+| `falso` | false |
+
+### Comentarios
+
+```
+# Esto es un comentario (línea ignorada por el lexer)
+```
 
 ### Indentación
 
 El lenguaje usa **tabs** (`\t`) para indentar, igual que Python. Cada nivel de profundidad es un tab adicional. Mezclar tabs con espacios genera un error léxico.
+
+---
+
+## Keywords del lenguaje
+
+| Keyword | Categoría | Descripción |
+|---|---|---|
+| `main` | Estructura | Punto de entrada del programa |
+| `entero` | Tipo | Número entero |
+| `decimal` | Tipo | Número decimal |
+| `texto` | Tipo | Cadena de texto |
+| `booleano` | Tipo | Valor lógico |
+| `escanear` | Tipo | Entrada del usuario |
+| `si` | Control | Condicional if |
+| `sino` | Control | Rama else |
+| `mientras` | Control | Bucle while |
+| `para` | Control | Bucle for |
+| `seleccionar` | Control | Switch |
+| `caso` | Control | Case dentro de seleccionar |
+| `defecto` | Control | Default dentro de seleccionar |
+| `Y` | Lógico | AND |
+| `O` | Lógico | OR |
+| `NO` | Lógico | NOT |
+| `verdadero` | Literal | true |
+| `falso` | Literal | false |
+| `nuevo` | Otro | new |
+| `star` | Objeto | Objeto de salida |
+| `imprimir` | Método | println |
 
 ---
 
@@ -100,16 +145,16 @@ javastar/
 │   ├── Lexer.java         # Analizador léxico
 │   ├── Parser.java        # Analizador sintáctico
 │   ├── Ast.java           # Definición de nodos del AST
-│   ├── AstPrinter.java    # Visualización del árbol con conectores
+│   ├── AstPrinter.java    # Visualización del árbol con conectores en español
 │   ├── Interpreter.java   # Intérprete / motor de ejecución
 │   ├── StarIDE.java       # IDE gráfico con tema espacial
 │   ├── Token.java         # Representación de tokens
-│   └── TokenType.java     # Enumeración de tipos de token
+│   └── TokenType.java     # Enumeración de tipos de token (con comentarios)
 ├── examples/
-│   ├── programa_ok.jstar  # Programa de ejemplo sin errores
+│   ├── programa_ok.jstar    # Programa de ejemplo sin errores
 │   └── programa_error.jstar # Programa con errores intencionales
-├── out/                   # Clases compiladas (.class)
-├── GRAMATICA_EBNF.md      # Gramática formal del lenguaje
+├── out/                     # Clases compiladas (.class)
+├── GRAMATICA_EBNF.md        # Gramática formal del lenguaje
 └── README.md
 ```
 
@@ -131,7 +176,7 @@ javac -d out src/javastar/*.java
 java -cp out javastar.Main
 ```
 
-Abre el **StarIDE**: editor con syntax highlighting, numeración de líneas y paneles de resultados.
+Abre el **StarIDE**: editor con syntax highlighting, numeración de líneas, autocompletado y paneles de resultados.
 
 ### Modo consola (CLI)
 
@@ -139,7 +184,7 @@ Abre el **StarIDE**: editor con syntax highlighting, numeración de líneas y pa
 java -cp out javastar.Main examples/programa_ok.jstar
 ```
 
-Procesa el archivo y muestra los resultados en terminal.
+Procesa el archivo y muestra los tokens, el árbol sintáctico y la salida en terminal.
 
 ---
 
@@ -156,8 +201,8 @@ IDE gráfico con tema espacial integrado en el compilador.
 │   Editor JavaStar           │    Resultados                      │
 │                             │  ┌──────────────────────────────┐  │
 │  main                       │  │  Salida                      │  │
-│      ente x = 10            │  │  Tokens                      │  │
-│      star.println(x)        │  │  Árbol                       │  │
+│      entero x = 10          │  │  Tokens                      │  │
+│      star.imprimir(x)       │  │  Árbol                       │  │
 │                             │  │  Errores                     │  │
 │                             │  └──────────────────────────────┘  │
 ├─────────────────────────────┴────────────────────────────────────┤
@@ -169,9 +214,9 @@ IDE gráfico con tema espacial integrado en el compilador.
 
 | Pestaña | Contenido |
 |---|---|
-|  Salida | Salida real del programa (`star.println`) |
-|  Tokens | Lista completa de tokens reconocidos |
-|   Árbol | Árbol sintáctico con conectores visuales |
+| Salida | Salida real del programa (`star.imprimir`) en tiempo real |
+| Tokens | Lista completa de tokens reconocidos por el lexer |
+| Árbol | Árbol sintáctico con conectores visuales en español |
 | Errores | Errores léxicos, sintácticos o de ejecución |
 
 ### Atajos de teclado
@@ -179,44 +224,93 @@ IDE gráfico con tema espacial integrado en el compilador.
 | Atajo | Acción |
 |---|---|
 | `Ctrl + Enter` | Compilar y ejecutar |
-| `Ctrl + S`     | Guardar archivo (pide ruta si es nuevo) |
+| `Ctrl + S` | Guardar archivo (pide ruta si es nuevo) |
+
+### Autocompletado
+
+Al escribir cualquier prefijo de keyword el editor muestra un popup flotante con las sugerencias disponibles:
+
+- `↑` / `↓` — navegar entre sugerencias
+- `Tab` o `Enter` — aceptar la sugerencia seleccionada
+- `Escape` — cerrar el popup
+- Doble clic — aceptar sugerencia con el mouse
+
+### Entrada interactiva (`escanear`)
+
+Cuando el programa contiene sentencias `escanear`, durante la ejecución aparece un diálogo emergente solicitando el valor para cada variable. La ejecución pausa hasta que el usuario ingresa el dato. Esto permite programas interactivos como juegos de adivinanza:
+
+```
+main
+    entero secreto = 37
+    entero ganaste = 0
+
+    star.imprimir("=== Adivina el numero ===")
+
+    mientras ganaste == 0
+        escanear numero = 0
+        si numero < secreto
+            star.imprimir("Muy bajo!")
+        sino
+            si numero > secreto
+                star.imprimir("Muy alto!")
+            sino
+                ganaste = 1
+                star.imprimir("Felicidades!")
+```
 
 ---
 
-## Árbol sintáctico
+## Árbol sintáctico (AST)
 
-El AST se visualiza con conectores tipo árbol de directorios:
+El AST se visualiza con conectores tipo árbol de directorios y etiquetas en español:
 
 ```
 Program
-├── VarDecl [ente]  x
+├── VarDecl [entero]  x
 │   └── Literal: 10
-├── IfStmt
-│   ├── Condition
+├── SiStmt
+│   ├── Condicion
 │   │   └── Binary: <
 │   │       ├── Variable: x
 │   │       └── Literal: 20
-│   ├── Then
-│   │   └── PrintStmt
+│   ├── Entonces
+│   │   └── ImprimirStmt
 │   │       └── Literal: menor
-│   └── Else
-│       └── PrintStmt
+│   └── Sino
+│       └── ImprimirStmt
 │           └── Literal: mayor
-└── ForStmt
-    ├── Init
-    │   └── VarDecl [ente]  i
+└── ParaStmt
+    ├── Inicio
+    │   └── VarDecl [entero]  i
     │       └── Literal: 0
-    ├── Condition
+    ├── Condicion
     │   └── Binary: <
     │       ├── Variable: i
     │       └── Literal: 3
-    ├── Increment
+    ├── Incremento
     │   └── ExprStmt
     │       └── Postfix: i++
-    └── Body
-        └── PrintStmt
+    └── Cuerpo
+        └── ImprimirStmt
             └── Variable: i
 ```
+
+### Nodos del AST
+
+| Nodo | Descripción |
+|---|---|
+| `VarDecl [tipo]` | Declaración de variable con su tipo |
+| `Assignment` | Asignación a variable existente |
+| `ImprimirStmt` | Sentencia `star.imprimir(...)` |
+| `SiStmt` | Condicional si/sino |
+| `MientrasStmt` | Bucle mientras |
+| `ParaStmt` | Bucle para |
+| `SeleccionarStmt` | Sentencia seleccionar |
+| `Binary` | Operación binaria (`+`, `<`, `Y`, etc.) |
+| `Unary` | Operación unaria (`-`, `NO`) |
+| `Literal` | Valor constante |
+| `Variable` | Referencia a variable |
+| `Postfix` | Operador postfijo `i++` / `i--` |
 
 ---
 
@@ -229,16 +323,17 @@ El compilador reporta errores con mensaje descriptivo, línea y columna, y conti
 ```
 Error léxico: símbolo no reconocido '@' en línea 3, columna 5
 Error léxico: cadena sin cerrar en línea 7, columna 10
+Error de indentación inconsistente en línea 12
 ```
 
 ### Errores sintácticos
 
 ```
 Error sintáctico en línea 5: Uso incorrecto: se debe escribir
-'star.println(...)' en lugar de solo 'println(...)'
+'star.imprimir(...)' en lugar de solo 'imprimir(...)'
 
 Error sintáctico en línea 8: ';' inesperado: el punto y coma
-solo se usa dentro de 'for'
+solo se usa dentro de 'para'
 ```
 
 ### Errores en tiempo de ejecución
@@ -252,14 +347,17 @@ Error de ejecución: división por cero
 
 ## Intérprete
 
-El intérprete ejecuta el AST directamente. Soporta:
+El intérprete ejecuta el AST directamente (tree-walking interpreter). Características:
 
-- Variables con tipos `ente`, `deci`, `text`, `bool`
+- Variables con tipos `entero`, `decimal`, `texto`, `booleano`
+- Entrada interactiva con `escanear` (diálogo emergente en el IDE)
 - Aritmética mixta (entero + decimal → decimal)
 - Concatenación de texto con `+`
-- Cortocircuito en `AND` y `OR`
+- Cortocircuito en `Y` y `O`
 - Operadores postfijos `i++` / `i--`
-- Bloques `if/else`, `while`, `for`, `switch/case/default`
+- Bloques `si/sino`, `mientras`, `para`, `seleccionar/caso/defecto`
+- Salida en tiempo real durante la ejecución (no al finalizar)
+- Ejecución en hilo separado para no bloquear la interfaz gráfica
 
 ---
 
