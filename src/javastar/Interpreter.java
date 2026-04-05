@@ -2,10 +2,20 @@ package javastar;
 
 import javastar.Ast.*;
 import java.util.*;
+import java.util.function.Function;
 
 public class Interpreter {
     private final Map<String, Object> environment = new LinkedHashMap<>();
     private final List<String> errors = new ArrayList<>();
+    private Function<String, String> inputProvider = prompt -> {
+        System.out.print(prompt + ": ");
+        try { return new java.util.Scanner(System.in).nextLine(); }
+        catch (Exception e) { return ""; }
+    };
+
+    public void setInputProvider(Function<String, String> provider) {
+        this.inputProvider = provider;
+    }
 
     public List<String> getErrors() { return errors; }
 
@@ -17,7 +27,14 @@ public class Interpreter {
 
     private void executeStatement(Statement stmt) {
         switch (stmt) {
-            case VarDecl d -> environment.put(d.name(), evaluate(d.initializer()));
+            case VarDecl d -> {
+                if (d.typeName().equals("escanear")) {
+                    String raw = inputProvider.apply(d.name());
+                    environment.put(d.name(), parseInput(raw));
+                } else {
+                    environment.put(d.name(), evaluate(d.initializer()));
+                }
+            }
             case Assignment a -> {
                 if (!environment.containsKey(a.name())) {
                     errors.add("Error de ejecución: variable '" + a.name() + "' no declarada");
@@ -77,15 +94,15 @@ public class Interpreter {
             case Unary u -> {
                 Object right = evaluate(u.right());
                 yield switch (u.operator()) {
-                    case "-"   -> negate(right);
-                    case "NOT" -> !isTruthy(right);
+                    case "-"  -> negate(right);
+                    case "NO" -> !isTruthy(right);
                     default    -> right;
                 };
             }
             case Binary b -> {
                 Object left = evaluate(b.left());
-                if (b.operator().equals("AND")) yield isTruthy(left) && isTruthy(evaluate(b.right()));
-                if (b.operator().equals("OR"))  yield isTruthy(left) || isTruthy(evaluate(b.right()));
+                if (b.operator().equals("Y")) yield isTruthy(left) && isTruthy(evaluate(b.right()));
+                if (b.operator().equals("O")) yield isTruthy(left) || isTruthy(evaluate(b.right()));
                 Object right = evaluate(b.right());
                 yield switch (b.operator()) {
                     case "+"  -> add(left, right);
@@ -188,5 +205,15 @@ public class Interpreter {
         if (v == null) return "null";
         if (v instanceof Double d && d == Math.floor(d) && !Double.isInfinite(d)) return String.valueOf(d.intValue());
         return v.toString();
+    }
+
+    private Object parseInput(String raw) {
+        if (raw == null) return "";
+        String trimmed = raw.trim();
+        if (trimmed.equals("true")) return true;
+        if (trimmed.equals("false")) return false;
+        try { return Integer.parseInt(trimmed); } catch (NumberFormatException ignored) {}
+        try { return Double.parseDouble(trimmed); } catch (NumberFormatException ignored) {}
+        return trimmed;
     }
 }

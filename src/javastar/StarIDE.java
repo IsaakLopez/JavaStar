@@ -31,9 +31,9 @@ public class StarIDE extends JFrame {
     private static final Color C_CMT     = new Color( 80,  80, 130);   // comentarios
 
     private static final String[] KEYWORDS = {
-        "main","ente","deci","text","bool","scan",
-        "if","else","while","for","switch","case","default",
-        "AND","OR","NOT","true","false","star","println","neww"
+        "main","entero","decimal","texto","booleano","escanear",
+        "si","sino","mientras","para","seleccionar","caso","defecto",
+        "Y","O","NO","verdadero","falso","star","imprimir","nuevo"
     };
 
     // ── Componentes principales ────────────────────────────────────────────
@@ -262,65 +262,82 @@ public class StarIDE extends JFrame {
 
     // ══ ACCIÓN: EJECUTAR ══════════════════════════════════════════════════
     private void runCode() {
-        status("  ⚡ Compilando y ejecutando...", C_GOLD);
-        outputArea.setText(""); tokenArea.setText(""); astArea.setText(""); errorArea.setText("");
+        status("  ⚡ Compilando...", C_GOLD);
+        outputArea.setText("");
+        tokenArea.setText("");
+        astArea.setText("");
+        errorArea.setText("");
+        tabs.setSelectedIndex(0);
 
-        // Capturar System.out → mostrar en pestaña Salida
-        PrintStream original = System.out;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(baos, true));
+        String source = editor.getText();
 
-        try {
-            String source = editor.getText();
+        // 1) Análisis léxico
+        Lexer lexer = new Lexer();
+        Lexer.LexResult lex = lexer.scan(source);
 
-            // 1) Análisis léxico
-            Lexer lexer = new Lexer();
-            Lexer.LexResult lex = lexer.scan(source);
+        StringBuilder tokBuf = new StringBuilder();
+        lex.tokens().forEach(t -> tokBuf.append(t).append("\n"));
+        tokenArea.setText(tokBuf.toString());
 
-            StringBuilder tokBuf = new StringBuilder();
-            lex.tokens().forEach(t -> tokBuf.append(t).append("\n"));
-            tokenArea.setText(tokBuf.toString());
-
-            if (!lex.errors().isEmpty()) {
-                showErrors("ERRORES LÉXICOS", lex.errors());
-                status("Error léxico — revisa la pestaña Errores", C_RED);
-                return;
-            }
-
-            // 2) Análisis sintáctico
-            Parser parser = new Parser(lex.tokens());
-            Parser.ParseResult parse = parser.parse();
-            astArea.setText(new AstPrinter().print(parse.program()));
-
-            if (!parse.errors().isEmpty()) {
-                showErrors("ERRORES SINTÁCTICOS", parse.errors());
-                status("Error sintáctico — revisa la pestaña Errores", C_RED);
-                return;
-            }
-
-            // 3) Interpretación
-            Interpreter interp = new Interpreter();
-            interp.execute(parse.program());
-            System.out.flush();
-
-            String out = baos.toString();
-            outputArea.setText(out.isBlank() ? "(el programa no generó salida en consola)" : out);
-            tabs.setSelectedIndex(0);
-
-            if (!interp.getErrors().isEmpty()) {
-                showErrors("ERRORES EN EJECUCIÓN", interp.getErrors());
-                status(" Ejecutado con errores — revisa Errores", new Color(255, 180, 50));
-            } else {
-                status(" Ejecución completada exitosamente", C_GREEN);
-            }
-
-        } catch (Exception ex) {
-            showErrors("ERROR INESPERADO", java.util.List.of(
-                    ex.getClass().getSimpleName() + ": " + ex.getMessage()));
-            status(" Error inesperado", C_RED);
-        } finally {
-            System.setOut(original);
+        if (!lex.errors().isEmpty()) {
+            showErrors("ERRORES LÉXICOS", lex.errors());
+            status("Error léxico — revisa la pestaña Errores", C_RED);
+            return;
         }
+
+        // 2) Análisis sintáctico
+        Parser parser = new Parser(lex.tokens());
+        Parser.ParseResult parse = parser.parse();
+        astArea.setText(new AstPrinter().print(parse.program()));
+
+        if (!parse.errors().isEmpty()) {
+            showErrors("ERRORES SINTÁCTICOS", parse.errors());
+            status("Error sintáctico — revisa la pestaña Errores", C_RED);
+            return;
+        }
+
+        // 3) Interpretación en hilo separado para salida en tiempo real
+        status("  ⚡ Ejecutando...", C_GOLD);
+
+        PrintStream original = System.out;
+        PrintStream realTime = new PrintStream(new OutputStream() {
+            @Override public void write(byte[] b, int off, int len) {
+                String text = new String(b, off, len);
+                SwingUtilities.invokeLater(() -> outputArea.append(text));
+            }
+            @Override public void write(int b) { write(new byte[]{(byte) b}, 0, 1); }
+        }, true);
+        System.setOut(realTime);
+
+        Interpreter interp = new Interpreter();
+        interp.setInputProvider(varName -> {
+            String[] result = {""};
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    String val = JOptionPane.showInputDialog(
+                        this, "Ingresa el valor para: " + varName,
+                        varName, JOptionPane.PLAIN_MESSAGE);
+                    result[0] = (val != null) ? val : "";
+                });
+            } catch (Exception ignored) {}
+            return result[0];
+        });
+
+        new Thread(() -> {
+            try {
+                interp.execute(parse.program());
+            } finally {
+                System.setOut(original);
+                SwingUtilities.invokeLater(() -> {
+                    if (!interp.getErrors().isEmpty()) {
+                        showErrors("ERRORES EN EJECUCIÓN", interp.getErrors());
+                        status(" Ejecutado con errores — revisa Errores", new Color(255, 180, 50));
+                    } else {
+                        status(" Ejecución completada exitosamente", C_GREEN);
+                    }
+                });
+            }
+        }, "javastar-exec").start();
     }
 
     private void newFile() {
@@ -551,25 +568,25 @@ public class StarIDE extends JFrame {
     private static String sampleCode() {
         return
             "main\n" +
-            "\tente x = 10\n" +
-            "\tente y = 20\n" +
+            "\tentero x = 10\n" +
+            "\tentero y = 20\n" +
             "\n" +
-            "\tif x < y AND y > 5\n" +
-            "\t\tstar.println(\"X es menor que Y\")\n" +
-            "\telse\n" +
-            "\t\tstar.println(\"X es mayor que Y\")\n" +
+            "\tsi x < y Y y > 5\n" +
+            "\t\tstar.imprimir(\"X es menor que Y\")\n" +
+            "\tsino\n" +
+            "\t\tstar.imprimir(\"X es mayor que Y\")\n" +
             "\n" +
-            "\tfor ente i = 0; i < 3; i++\n" +
-            "\t\tstar.println(i)\n" +
+            "\tpara entero i = 0; i < 3; i++\n" +
+            "\t\tstar.imprimir(i)\n" +
             "\n" +
-            "\twhile x < 15\n" +
+            "\tmientras x < 15\n" +
             "\t\tx = x + 1\n" +
             "\n" +
-            "\tswitch x\n" +
-            "\t\tcase 15\n" +
-            "\t\t\tstar.println(\"X vale 15\")\n" +
-            "\t\tdefault\n" +
-            "\t\t\tstar.println(\"Otro valor\")\n";
+            "\tseleccionar x\n" +
+            "\t\tcaso 15\n" +
+            "\t\t\tstar.imprimir(\"X vale 15\")\n" +
+            "\t\tdefecto\n" +
+            "\t\t\tstar.imprimir(\"Otro valor\")\n";
     }
 
     // ── Punto de entrada para lanzar el IDE ───────────────────────────────

@@ -54,70 +54,70 @@ public class AstPrinter {
                 printExpr(a.value(), sb, cp, true);
             }
             case PrintStmt p -> {
-                node(sb, prefix, isLast, "PrintStmt");
+                node(sb, prefix, isLast, "ImprimirStmt");
                 printExpr(p.value(), sb, cp, true);
             }
             case IfStmt i -> {
-                node(sb, prefix, isLast, "IfStmt");
+                node(sb, prefix, isLast, "SiStmt");
                 boolean hasElse = !i.elseBranch().isEmpty();
-                // Condition
-                node(sb, cp, false, "Condition");
+                // Condición
+                node(sb, cp, false, "Condicion");
                 printExpr(i.condition(), sb, childPrefix(cp, false), true);
-                // Then
-                node(sb, cp, !hasElse, "Then");
+                // Entonces
+                node(sb, cp, !hasElse, "Entonces");
                 printList(i.thenBranch(), sb, childPrefix(cp, !hasElse), this::printStatement);
-                // Else (opcional)
+                // Sino (opcional)
                 if (hasElse) {
-                    node(sb, cp, true, "Else");
+                    node(sb, cp, true, "Sino");
                     printList(i.elseBranch(), sb, childPrefix(cp, true), this::printStatement);
                 }
             }
             case WhileStmt w -> {
-                node(sb, prefix, isLast, "WhileStmt");
+                node(sb, prefix, isLast, "MientrasStmt");
                 boolean hasBody = !w.body().isEmpty();
-                node(sb, cp, !hasBody, "Condition");
+                node(sb, cp, !hasBody, "Condicion");
                 printExpr(w.condition(), sb, childPrefix(cp, !hasBody), true);
                 if (hasBody) {
-                    node(sb, cp, true, "Body");
+                    node(sb, cp, true, "Cuerpo");
                     printList(w.body(), sb, childPrefix(cp, true), this::printStatement);
                 }
             }
             case ForStmt f -> {
-                node(sb, prefix, isLast, "ForStmt");
-                node(sb, cp, false, "Init");
+                node(sb, prefix, isLast, "ParaStmt");
+                node(sb, cp, false, "Inicio");
                 printStatement(f.initializer(), sb, childPrefix(cp, false), true);
-                node(sb, cp, false, "Condition");
+                node(sb, cp, false, "Condicion");
                 printExpr(f.condition(), sb, childPrefix(cp, false), true);
-                node(sb, cp, false, "Increment");
+                node(sb, cp, false, "Incremento");
                 printStatement(f.increment(), sb, childPrefix(cp, false), true);
-                node(sb, cp, true, "Body");
+                node(sb, cp, true, "Cuerpo");
                 printList(f.body(), sb, childPrefix(cp, true), this::printStatement);
             }
             case SwitchStmt s -> {
-                node(sb, prefix, isLast, "SwitchStmt");
+                node(sb, prefix, isLast, "SeleccionarStmt");
                 boolean hasDefault = !s.defaultBranch().isEmpty();
                 boolean noCases    = s.cases().isEmpty();
-                // Target
-                node(sb, cp, noCases && !hasDefault, "Target");
+                // Objetivo
+                node(sb, cp, noCases && !hasDefault, "Objetivo");
                 printExpr(s.target(), sb, childPrefix(cp, noCases && !hasDefault), true);
-                // Cases
+                // Casos
                 List<CaseBlock> cases = s.cases();
                 for (int i = 0; i < cases.size(); i++) {
                     CaseBlock c = cases.get(i);
                     boolean caseLast = (i == cases.size() - 1) && !hasDefault;
-                    node(sb, cp, caseLast, "Case");
+                    node(sb, cp, caseLast, "Caso");
                     String caseCp = childPrefix(cp, caseLast);
                     boolean bodyEmpty = c.body().isEmpty();
-                    node(sb, caseCp, bodyEmpty, "Value");
+                    node(sb, caseCp, bodyEmpty, "Valor");
                     printExpr(c.value(), sb, childPrefix(caseCp, bodyEmpty), true);
                     if (!bodyEmpty) {
-                        node(sb, caseCp, true, "Body");
+                        node(sb, caseCp, true, "Cuerpo");
                         printList(c.body(), sb, childPrefix(caseCp, true), this::printStatement);
                     }
                 }
-                // Default (opcional)
+                // Defecto (opcional)
                 if (hasDefault) {
-                    node(sb, cp, true, "Default");
+                    node(sb, cp, true, "Defecto");
                     printList(s.defaultBranch(), sb, childPrefix(cp, true), this::printStatement);
                 }
             }

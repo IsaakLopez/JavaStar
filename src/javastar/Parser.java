@@ -45,7 +45,7 @@ public class Parser {
         if (check(TokenType.STAR) && checkNext(TokenType.DOT)) return printStatement();
         if (check(TokenType.IDENTIFIER) && checkNext(TokenType.ASSIGN)) return assignmentStatement();
         if (check(TokenType.PRINTLN)) {
-            error(peek(), "Uso incorrecto: se debe escribir 'star.println(...)' en lugar de solo 'println(...)'");
+            error(peek(), "Uso incorrecto: se debe escribir 'star.imprimir(...)' en lugar de solo 'imprimir(...)'");
             synchronize();
             return new ExprStmt(new Literal("<error>"));
         }
@@ -78,36 +78,36 @@ public class Parser {
     private Statement printStatement() {
         consume(TokenType.STAR, "Se esperaba 'star'");
         consume(TokenType.DOT, "Se esperaba '.'");
-        consume(TokenType.PRINTLN, "Se esperaba 'println'");
+        consume(TokenType.PRINTLN, "Se esperaba 'imprimir'");
         consume(TokenType.LPAREN, "Se esperaba '('");
         Expression value = expression();
         consume(TokenType.RPAREN, "Se esperaba ')'");
-        consumeLineEnd("Se esperaba fin de línea después de println");
+        consumeLineEnd("Se esperaba fin de línea después de imprimir");
         return new PrintStmt(value);
     }
 
     private Statement ifStatement() {
         Expression condition = expression();
-        consumeLineEnd("Se esperaba salto de línea después de condición if");
-        List<Statement> thenBranch = block("if");
+        consumeLineEnd("Se esperaba salto de línea después de condición si");
+        List<Statement> thenBranch = block("si");
         List<Statement> elseBranch = List.of();
         skipNewlines();
         if (match(TokenType.ELSE)) {
-            consumeLineEnd("Se esperaba salto de línea después de else");
-            elseBranch = block("else");
+            consumeLineEnd("Se esperaba salto de línea después de sino");
+            elseBranch = block("sino");
         }
         return new IfStmt(condition, thenBranch, elseBranch);
     }
 
     private Statement whileStatement() {
         Expression condition = expression();
-        consumeLineEnd("Se esperaba salto de línea después de condición while");
-        return new WhileStmt(condition, block("while"));
+        consumeLineEnd("Se esperaba salto de línea después de condición mientras");
+        return new WhileStmt(condition, block("mientras"));
     }
 
     private Statement forStatement() {
         Token type = consumeAny(new TokenType[]{TokenType.ENTE, TokenType.DECI, TokenType.TEXT, TokenType.BOOL},
-                "Se esperaba tipo de variable en inicialización del for");
+                "Se esperaba tipo de variable en inicialización del para");
         Token name = consume(TokenType.IDENTIFIER, "Se esperaba identificador en for");
         consume(TokenType.ASSIGN, "Se esperaba '=' en for");
         Expression initExpr = expression();
@@ -125,8 +125,8 @@ public class Parser {
             error(peek(), "Incremento no válido en for");
             increment = new ExprStmt(new Literal("<error>"));
         }
-        consumeLineEnd("Se esperaba salto de línea después de encabezado for");
-        return new ForStmt(new VarDecl(type.lexeme, name.lexeme, initExpr), condition, increment, block("for"));
+        consumeLineEnd("Se esperaba salto de línea después de encabezado para");
+        return new ForStmt(new VarDecl(type.lexeme, name.lexeme, initExpr), condition, increment, block("para"));
     }
 
     private Statement assignmentNoLineEnd() {
@@ -138,27 +138,27 @@ public class Parser {
 
     private Statement switchStatement() {
         Expression target = expression();
-        consumeLineEnd("Se esperaba salto de línea después de switch");
-        consume(TokenType.INDENT, "Se esperaba bloque indentado en switch");
+        consumeLineEnd("Se esperaba salto de línea después de seleccionar");
+        consume(TokenType.INDENT, "Se esperaba bloque indentado en seleccionar");
         List<CaseBlock> cases = new ArrayList<>();
         List<Statement> defaultBranch = List.of();
         skipNewlines();
         while (!check(TokenType.DEDENT) && !isAtEnd()) {
             if (match(TokenType.CASE)) {
                 Expression caseValue = expression();
-                consumeLineEnd("Se esperaba salto de línea después de case");
-                List<Statement> body = block("case");
+                consumeLineEnd("Se esperaba salto de línea después de caso");
+                List<Statement> body = block("caso");
                 cases.add(new CaseBlock(caseValue, body));
             } else if (match(TokenType.DEFAULT)) {
-                consumeLineEnd("Se esperaba salto de línea después de default");
-                defaultBranch = block("default");
+                consumeLineEnd("Se esperaba salto de línea después de defecto");
+                defaultBranch = block("defecto");
             } else {
-                error(peek(), "Se esperaba 'case' o 'default' dentro de switch");
+                error(peek(), "Se esperaba 'caso' o 'defecto' dentro de seleccionar");
                 synchronize();
             }
             skipNewlines();
         }
-        consume(TokenType.DEDENT, "Se esperaba cierre del bloque switch");
+        consume(TokenType.DEDENT, "Se esperaba cierre del bloque seleccionar");
         return new SwitchStmt(target, cases, defaultBranch);
     }
 

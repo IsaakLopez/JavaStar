@@ -5,27 +5,27 @@ import java.util.*;
 public class Lexer {
     private static final Map<String, TokenType> KEYWORDS = new HashMap<>();
     static {
-        KEYWORDS.put("main", TokenType.MAIN);
-        KEYWORDS.put("ente", TokenType.ENTE);
-        KEYWORDS.put("deci", TokenType.DECI);
-        KEYWORDS.put("text", TokenType.TEXT);
-        KEYWORDS.put("bool", TokenType.BOOL);
-        KEYWORDS.put("scan", TokenType.SCAN);
-        KEYWORDS.put("if", TokenType.IF);
-        KEYWORDS.put("else", TokenType.ELSE);
-        KEYWORDS.put("while", TokenType.WHILE);
-        KEYWORDS.put("for", TokenType.FOR);
-        KEYWORDS.put("switch", TokenType.SWITCH);
-        KEYWORDS.put("case", TokenType.CASE);
-        KEYWORDS.put("default", TokenType.DEFAULT);
-        KEYWORDS.put("AND", TokenType.AND);
-        KEYWORDS.put("OR", TokenType.OR);
-        KEYWORDS.put("NOT", TokenType.NOT);
-        KEYWORDS.put("true", TokenType.TRUE);
-        KEYWORDS.put("false", TokenType.FALSE);
-        KEYWORDS.put("neww", TokenType.NEWW);
-        KEYWORDS.put("star", TokenType.STAR);
-        KEYWORDS.put("println", TokenType.PRINTLN);
+        KEYWORDS.put("main",        TokenType.MAIN);
+        KEYWORDS.put("entero",      TokenType.ENTE);
+        KEYWORDS.put("decimal",     TokenType.DECI);
+        KEYWORDS.put("texto",       TokenType.TEXT);
+        KEYWORDS.put("booleano",    TokenType.BOOL);
+        KEYWORDS.put("escanear",    TokenType.SCAN);
+        KEYWORDS.put("si",          TokenType.IF);
+        KEYWORDS.put("sino",        TokenType.ELSE);
+        KEYWORDS.put("mientras",    TokenType.WHILE);
+        KEYWORDS.put("para",        TokenType.FOR);
+        KEYWORDS.put("seleccionar", TokenType.SWITCH);
+        KEYWORDS.put("caso",        TokenType.CASE);
+        KEYWORDS.put("defecto",     TokenType.DEFAULT);
+        KEYWORDS.put("Y",           TokenType.AND);
+        KEYWORDS.put("O",           TokenType.OR);
+        KEYWORDS.put("NO",          TokenType.NOT);
+        KEYWORDS.put("verdadero",   TokenType.TRUE);
+        KEYWORDS.put("falso",       TokenType.FALSE);
+        KEYWORDS.put("nuevo",       TokenType.NEWW);
+        KEYWORDS.put("star",        TokenType.STAR);
+        KEYWORDS.put("imprimir",    TokenType.PRINTLN);
     }
 
     private final List<Token> tokens = new ArrayList<>();

@@ -8,53 +8,53 @@ bloquePrincipal = INDENT, { sentencia }, DEDENT ;
 sentencia       = declaracion
                 | asignacion
                 | impresion
-                | ifStmt
-                | whileStmt
-                | forStmt
-                | switchStmt
+                | siStmt
+                | mientrasStmt
+                | paraStmt
+                | seleccionarStmt
                 | expresion, saltoLinea ;
 
 declaracion     = tipoDato, identificador, "=", expresion, saltoLinea ;
 
 asignacion      = identificador, "=", expresion, saltoLinea ;
 
-impresion       = "star", ".", "println", "(", expresion, ")", saltoLinea ;
+impresion       = "star", ".", "imprimir", "(", expresion, ")", saltoLinea ;
 
-ifStmt          = "if", expresion, saltoLinea,
+siStmt          = "si", expresion, saltoLinea,
                   bloque,
-                  [ "else", saltoLinea, bloque ] ;
+                  [ "sino", saltoLinea, bloque ] ;
 
-whileStmt       = "while", expresion, saltoLinea, bloque ;
+mientrasStmt    = "mientras", expresion, saltoLinea, bloque ;
 
-forStmt         = "for", tipoDato, identificador, "=", expresion, ";",
+paraStmt        = "para", tipoDato, identificador, "=", expresion, ";",
                   expresion, ";",
                   ( identificador, "++"
                   | identificador, "--"
                   | identificador, "=", expresion ),
                   saltoLinea, bloque ;
 
-switchStmt      = "switch", expresion, saltoLinea,
+seleccionarStmt = "seleccionar", expresion, saltoLinea,
                   INDENT,
-                  { caseStmt },
-                  [ defaultStmt ],
+                  { casoStmt },
+                  [ defectoStmt ],
                   DEDENT ;
 
-caseStmt        = "case", expresion, saltoLinea, bloque ;
-defaultStmt     = "default", saltoLinea, bloque ;
+casoStmt        = "caso", expresion, saltoLinea, bloque ;
+defectoStmt     = "defecto", saltoLinea, bloque ;
 
 bloque          = INDENT, { sentencia }, DEDENT ;
 
-tipoDato        = "ente" | "deci" | "text" | "bool" | "scan" ;
+tipoDato        = "entero" | "decimal" | "texto" | "booleano" | "escanear" ;
 
 expresion       = orExpr ;
-orExpr          = andExpr, { "OR", andExpr } ;
-andExpr         = equalityExpr, { "AND", equalityExpr } ;
+orExpr          = andExpr, { "O", andExpr } ;
+andExpr         = equalityExpr, { "Y", equalityExpr } ;
 equalityExpr    = comparisonExpr, { ("==" | "!="), comparisonExpr } ;
 comparisonExpr  = term, { ("<" | "<=" | ">" | ">="), term } ;
 term            = factor, { ("+" | "-"), factor } ;
 factor          = unary, { ("*" | "/" | "%"), unary } ;
-unary           = [ "NOT" | "-" ], primary ;
-primary         = entero | decimal | cadena | "true" | "false"
+unary           = [ "NO" | "-" ], primary ;
+primary         = entero | decimal | cadena | "verdadero" | "falso"
                 | identificador
                 | identificador, ("++" | "--")
                 | "(", expresion, ")" ;

@@ -1,7 +1,0 @@
-main
-	ente numero = 14
-
-	if numero % 2 == 0
-		star.println("El numero es par")
-	else
-		star.println("El numero es impar")
