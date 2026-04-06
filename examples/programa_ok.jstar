@@ -1,20 +1,20 @@
 main
-    entero x = 10
-    entero y = 20
+	entero x = 10
+	entero y = 20
 
-    si x < y Y y > 5
-        star.imprimir("X es menor")
-    sino
-        star.imprimir("X es mayor")
+	si x < y Y y > 5
+		star.imprimir("X es menor")
+	sino
+		star.imprimir("X es mayor")
 
-    para entero i = 0; i < 3; i++
-        star.imprimir(i)
+	para entero i = 0; i < 3; i++
+		star.imprimir(i)
 
-    mientras x < 15
-        x = x + 1
+	mientras x < 15
+		x = x + 1
 
-    seleccionar x
-        caso 10
-            star.imprimir("Diez")
-        defecto
-            star.imprimir("Otro")
+	seleccionar x
+		caso 10
+			star.imprimir("Diez")
+		defecto
+			star.imprimir("Otro")
