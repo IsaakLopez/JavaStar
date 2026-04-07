@@ -27,13 +27,15 @@ public class Interpreter {
 
     private void executeStatement(Statement stmt) {
         switch (stmt) {
-            case VarDecl d -> {
-                if (d.typeName().equals("escanear")) {
-                    String raw = inputProvider.apply(d.name());
-                    environment.put(d.name(), parseInput(raw));
-                } else {
-                    environment.put(d.name(), evaluate(d.initializer()));
+            case VarDecl d -> environment.put(d.name(), evaluate(d.initializer()));
+            case ScanStmt s -> {
+                if (!environment.containsKey(s.varName())) {
+                    errors.add("Error de ejecución: la variable '" + s.varName() +
+                               "' no está declarada. Declárela antes de usar star.escanear(...)");
+                    return;
                 }
+                String raw = inputProvider.apply(s.varName());
+                environment.put(s.varName(), parseInput(raw));
             }
             case Assignment a -> {
                 if (!environment.containsKey(a.name())) {

@@ -7,11 +7,12 @@ public class Ast {
 
     public record Program(List<Statement> statements) implements Node {}
 
-    public sealed interface Statement extends Node permits VarDecl, Assignment, PrintStmt, IfStmt, WhileStmt, ForStmt, SwitchStmt, ExprStmt {}
+    public sealed interface Statement extends Node permits VarDecl, Assignment, PrintStmt, ScanStmt, IfStmt, WhileStmt, ForStmt, SwitchStmt, ExprStmt {}
 
     public record VarDecl(String typeName, String name, Expression initializer) implements Statement {}
     public record Assignment(String name, Expression value) implements Statement {}
     public record PrintStmt(Expression value) implements Statement {}
+    public record ScanStmt(String varName) implements Statement {}
     public record IfStmt(Expression condition, List<Statement> thenBranch, List<Statement> elseBranch) implements Statement {}
     public record WhileStmt(Expression condition, List<Statement> body) implements Statement {}
     public record ForStmt(Statement initializer, Expression condition, Statement increment, List<Statement> body) implements Statement {}

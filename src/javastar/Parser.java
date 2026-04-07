@@ -35,17 +35,22 @@ public class Parser {
     }
 
     private Statement statement() {
-        if (match(TokenType.ENTE, TokenType.DECI, TokenType.TEXT, TokenType.BOOL, TokenType.SCAN)) {
+        if (match(TokenType.ENTE, TokenType.DECI, TokenType.TEXT, TokenType.BOOL)) {
             return variableDeclaration(previous());
         }
         if (match(TokenType.IF)) return ifStatement();
         if (match(TokenType.WHILE)) return whileStatement();
         if (match(TokenType.FOR)) return forStatement();
         if (match(TokenType.SWITCH)) return switchStatement();
-        if (check(TokenType.STAR) && checkNext(TokenType.DOT)) return printStatement();
+        if (check(TokenType.STAR) && checkNext(TokenType.DOT)) return starStatement();
         if (check(TokenType.IDENTIFIER) && checkNext(TokenType.ASSIGN)) return assignmentStatement();
         if (check(TokenType.PRINTLN)) {
             error(peek(), "Uso incorrecto: se debe escribir 'star.imprimir(...)' en lugar de solo 'imprimir(...)'");
+            synchronize();
+            return new ExprStmt(new Literal("<error>"));
+        }
+        if (check(TokenType.SCAN)) {
+            error(peek(), "Uso incorrecto: declara primero la variable y luego usa 'star.escanear(variable)'");
             synchronize();
             return new ExprStmt(new Literal("<error>"));
         }
@@ -75,15 +80,26 @@ public class Parser {
         return new Assignment(name.lexeme, value);
     }
 
-    private Statement printStatement() {
+    private Statement starStatement() {
         consume(TokenType.STAR, "Se esperaba 'star'");
         consume(TokenType.DOT, "Se esperaba '.'");
-        consume(TokenType.PRINTLN, "Se esperaba 'imprimir'");
-        consume(TokenType.LPAREN, "Se esperaba '('");
-        Expression value = expression();
-        consume(TokenType.RPAREN, "Se esperaba ')'");
-        consumeLineEnd("Se esperaba fin de línea después de imprimir");
-        return new PrintStmt(value);
+        if (match(TokenType.PRINTLN)) {
+            consume(TokenType.LPAREN, "Se esperaba '('");
+            Expression value = expression();
+            consume(TokenType.RPAREN, "Se esperaba ')'");
+            consumeLineEnd("Se esperaba fin de línea después de imprimir");
+            return new PrintStmt(value);
+        }
+        if (match(TokenType.SCAN)) {
+            consume(TokenType.LPAREN, "Se esperaba '('");
+            Token name = consume(TokenType.IDENTIFIER, "Se esperaba nombre de variable en escanear");
+            consume(TokenType.RPAREN, "Se esperaba ')'");
+            consumeLineEnd("Se esperaba fin de línea después de escanear");
+            return new ScanStmt(name.lexeme);
+        }
+        error(peek(), "Se esperaba 'imprimir' o 'escanear' después de 'star.'");
+        synchronize();
+        return new ExprStmt(new Literal("<error>"));
     }
 
     private Statement ifStatement() {

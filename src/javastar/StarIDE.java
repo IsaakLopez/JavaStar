@@ -5,6 +5,7 @@ import javax.swing.border.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.*;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
@@ -31,9 +32,9 @@ public class StarIDE extends JFrame {
     private static final Color C_CMT     = new Color( 80,  80, 130);   // comentarios
 
     private static final String[] KEYWORDS = {
-        "main","entero","decimal","texto","booleano","escanear",
+        "main","entero","decimal","texto","booleano",
         "si","sino","mientras","para","seleccionar","caso","defecto",
-        "Y","O","NO","verdadero","falso","star","imprimir","nuevo"
+        "Y","O","NO","verdadero","falso","star","imprimir","escanear","nuevo"
     };
 
     // ── Componentes principales ────────────────────────────────────────────
@@ -66,6 +67,7 @@ public class StarIDE extends JFrame {
 
         applyHighlighting();
         setVisible(true);
+        setupHelpButton();
     }
 
     // ── HEADER: banner con campo de estrellas ──────────────────────────────
@@ -472,7 +474,7 @@ public class StarIDE extends JFrame {
                 editor.setText(content);
                 applyTabSize(editor, 4);
                 applyHighlighting();
-                status("  ✦ Archivo cargado: " + currentFile.getName(), C_CYAN);
+                status(" Archivo cargado: " + currentFile.getName(), C_CYAN);
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "No se pudo leer el archivo.",
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -496,7 +498,7 @@ public class StarIDE extends JFrame {
         }
         try {
             java.nio.file.Files.writeString(currentFile.toPath(), editor.getText());
-            status("  ✔ Guardado: " + currentFile.getName(), C_GOLD);
+            status("Guardado: " + currentFile.getName(), C_GOLD);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "No se pudo guardar el archivo:\n" + ex.getMessage(),
                     "Error al guardar", JOptionPane.ERROR_MESSAGE);
@@ -523,11 +525,11 @@ public class StarIDE extends JFrame {
             StyleConstants.setBold(base, false);
             doc.setCharacterAttributes(0, text.length(), base, true);
 
-            colorize(doc, text, "\"[^\"\\n]*\"",           C_STR, false);  // strings
             colorize(doc, text, "\\b\\d+(\\.\\d+)?\\b",    C_NUM, false);  // números
-            colorize(doc, text, "#.*",    new Color(75, 75, 125), false);   // comentarios
             for (String kw : KEYWORDS)
                 colorize(doc, text, "\\b" + Pattern.quote(kw) + "\\b", C_KW, true);
+            colorize(doc, text, "#.*",    new Color(75, 75, 125), false);   // comentarios
+            colorize(doc, text, "\"[^\"\\n]*\"",           C_STR, false);  // strings (último: sobreescribe todo)
 
         } catch (Exception ignored) {
         } finally {
@@ -682,7 +684,9 @@ public class StarIDE extends JFrame {
     private static String sampleCode() {
         return
             "main\n" +
-            "\tentero x = 10\n" +
+            "\tentero x = 0\n" +
+            "\tstar.escanear(x)\n" +
+            "\n" +
             "\tentero y = 20\n" +
             "\n" +
             "\tsi x < y Y y > 5\n" +
@@ -701,6 +705,127 @@ public class StarIDE extends JFrame {
             "\t\t\tstar.imprimir(\"X vale 15\")\n" +
             "\t\tdefecto\n" +
             "\t\t\tstar.imprimir(\"Otro valor\")\n";
+    }
+
+    // ── BOTÓN FLOTANTE DE AYUDA (FAB) ─────────────────────────────────────
+    private void setupHelpButton() {
+        // Glass pane personalizado: solo "contiene" el área del botón,
+        // así los eventos del resto de la ventana pasan sin interceptarse.
+        JPanel glass = new JPanel(null) {
+            @Override public boolean contains(int x, int y) {
+                for (Component c : getComponents())
+                    if (c.getBounds().contains(x, y)) return true;
+                return false;
+            }
+        };
+        glass.setOpaque(false);
+        setGlassPane(glass);
+        glass.setVisible(true);
+
+        JButton fab = buildFAB();
+        glass.add(fab);
+
+        // Posición inicial
+        Insets ins = getInsets();
+        fab.setBounds(getWidth() - ins.right - 64, getHeight() - ins.bottom - 94, 50, 50);
+
+        // Reposicionar al cambiar tamaño
+        addComponentListener(new ComponentAdapter() {
+            @Override public void componentResized(ComponentEvent e) {
+                Insets i = getInsets();
+                fab.setBounds(getWidth() - i.right - 64, getHeight() - i.bottom - 94, 50, 50);
+            }
+        });
+    }
+
+    private JButton buildFAB() {
+        JButton btn = new JButton() {
+            private float pulse = 0f;
+            private float dir   = 0.04f;
+            {
+                javax.swing.Timer t = new javax.swing.Timer(50, e -> {
+                    pulse += dir;
+                    if (pulse >= 1f || pulse <= 0f) dir = -dir;
+                    repaint();
+                });
+                t.start();
+            }
+
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+
+                // Halo pulsante dorado (exterior)
+                float alpha = (getModel().isRollover() ? 0.45f : 0.12f) + pulse * 0.10f;
+                g2.setColor(new Color(1f, 0.78f, 0.2f, alpha));
+                g2.fill(new java.awt.geom.Ellipse2D.Float(-7, -7, w + 14, h + 14));
+
+                // Fondo circular oscuro
+                Color bg = getModel().isPressed()
+                        ? new Color(80, 65, 10)
+                        : getModel().isRollover()
+                        ? new Color(50, 40, 5)
+                        : new Color(14, 14, 34);
+                g2.setColor(bg);
+                g2.fillOval(0, 0, w - 1, h - 1);
+
+                // Borde dorado
+                g2.setStroke(new BasicStroke(1.8f));
+                g2.setColor(C_GOLD);
+                g2.drawOval(1, 1, w - 3, h - 3);
+
+                // Estrella de 5 puntas centrada
+                int cx = w / 2, cy = h / 2 - 3;
+                int[] xs = new int[10], ys = new int[10];
+                for (int i = 0; i < 10; i++) {
+                    double a = Math.PI / 5 * i - Math.PI / 2;
+                    double r = (i % 2 == 0) ? 11 : 5;
+                    xs[i] = (int) Math.round(cx + r * Math.cos(a));
+                    ys[i] = (int) Math.round(cy + r * Math.sin(a));
+                }
+                g2.setColor(C_GOLD);
+                g2.fillPolygon(xs, ys, 10);
+
+                // Signo "?" bajo la estrella
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 9));
+                FontMetrics fm = g2.getFontMetrics();
+                String q = "?";
+                g2.drawString(q, (w - fm.stringWidth(q)) / 2, h / 2 + 10);
+
+                g2.dispose();
+            }
+        };
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setToolTipText("Manual de Usuario (PDF)");
+        btn.addActionListener(e -> openManual());
+        return btn;
+    }
+
+    private void openManual() {
+        status("  Generando manual PDF...", C_CYAN);
+        new Thread(() -> {
+            try {
+                File pdf = ManualGenerator.generate();
+                SwingUtilities.invokeLater(() ->
+                        status("  Manual generado \u2014 abriendo...", C_GREEN));
+                if (java.awt.Desktop.isDesktopSupported())
+                    java.awt.Desktop.getDesktop().open(pdf);
+                else
+                    SwingUtilities.invokeLater(() ->
+                            status("  PDF en: " + pdf.getAbsolutePath(), C_CYAN));
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    status("  Error al generar el manual.", C_RED);
+                    JOptionPane.showMessageDialog(this,
+                            "No se pudo generar el manual:\n" + ex.getMessage(),
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }, "javastar-manual").start();
     }
 
     // ── Punto de entrada para lanzar el IDE ───────────────────────────────

@@ -57,6 +57,7 @@ public class AstPrinter {
                 node(sb, prefix, isLast, "ImprimirStmt");
                 printExpr(p.value(), sb, cp, true);
             }
+            case ScanStmt s -> node(sb, prefix, isLast, "EscanearStmt  →  " + s.varName());
             case IfStmt i -> {
                 node(sb, prefix, isLast, "SiStmt");
                 boolean hasElse = !i.elseBranch().isEmpty();
